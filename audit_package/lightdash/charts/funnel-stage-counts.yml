@@ -1,0 +1,14 @@
+# Chart-as-code — referenciado por lightdash/dashboards.yml (tile `funnel-stage-counts`).
+# Métricas consumidas (dbt meta): total_signups, total_trials,
+# total_activated, total_paid — contagem absoluta por estágio.
+version: 1
+
+name: Funnel Stage Counts
+slug: funnel-stage-counts
+spaceSlug: growth
+tableName: saas_funnel
+description: >-
+  Absolute users per funnel stage (Visitor -> Trial -> Activated -> Paid):
+  the sanity layer for drop-offs before any rate is computed.
+display: >-
+  Funil vertical com 4 barras ordenadas por profundidade do estágio.

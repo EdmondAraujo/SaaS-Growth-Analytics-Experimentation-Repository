@@ -1,0 +1,14 @@
+# Chart-as-code — referenciado por lightdash/dashboards.yml (tile `channel-performance`).
+# Modelo consumido: fct_channel_spend (marts) com a métrica meta `cac` —
+# join (mês, canal) entre analytics_raw.daily_spend e saas_funnel.
+version: 1
+
+name: Channel Performance (CAC by Channel)
+slug: channel-performance
+spaceSlug: growth
+tableName: fct_channel_spend
+description: >-
+  CAC por (mês, canal): spend_usd / paid_users do MESMO mês+canal. Meses com
+  spend e zero conversões expõem NULL cac_usd — nunca mixados no lifetime.
+display: >-
+  Barras por acquisition_channel com linha de tendência do CAC mensal.

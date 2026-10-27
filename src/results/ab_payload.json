@@ -1,0 +1,66 @@
+{
+  "experiment": "activation_flow_v3",
+  "config": {
+    "alpha": 0.05,
+    "two_sided": true,
+    "target_power": 0.8,
+    "srm_expected_split": [
+      0.5,
+      0.5
+    ],
+    "mde_abs_pp": 2.0
+  },
+  "srm_gate": {
+    "method": "chi_square_1df (binomial exact fallback small cells)",
+    "observed_control": 5973,
+    "observed_treatment": 6027,
+    "expected_control": 6000,
+    "expected_treatment": 6000,
+    "chi2": 0.243,
+    "p_value": 0.6220477036624747,
+    "exact_p_value": null,
+    "srm_flagged": false
+  },
+  "conversion_test": {
+    "metric": "visitor_to_paid",
+    "control_rate": 0.10313075506445672,
+    "treatment_rate": 0.11398705823792932,
+    "abs_lift": 0.010856303173472595,
+    "rel_lift": 0.10526736827135035,
+    "z_stat": 1.9112444325153495,
+    "p_value": 0.05597317631197973,
+    "ci_low": -0.00027284344855751236,
+    "ci_high": 0.021985449795502703,
+    "significant": false
+  },
+  "power_analysis": {
+    "alpha": 0.05,
+    "observed_power": 0.4806184516957699,
+    "power_at_mde": 0.9408051292269317,
+    "n_required_per_arm": 3799,
+    "mde_abs": 0.02,
+    "n_per_arm_current": 6000.0
+  },
+  "funnel_summary": {
+    "control": {
+      "visitors": 5973,
+      "trials": 2411,
+      "activated": 2036,
+      "paid": 616,
+      "trial_to_paid_rate": 0.2555,
+      "mrr_usd": 56244.0
+    },
+    "treatment": {
+      "visitors": 6027,
+      "trials": 2419,
+      "activated": 2039,
+      "paid": 687,
+      "trial_to_paid_rate": 0.284,
+      "mrr_usd": 59013.0
+    }
+  },
+  "mrr_usd": {
+    "control": 56244.0,
+    "treatment": 59013.0
+  }
+}

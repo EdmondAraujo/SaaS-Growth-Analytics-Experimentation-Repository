@@ -1,0 +1,24 @@
+﻿# AUDIT EVIDENCE — saas_analytics v1.2.0 (capturado 2026-10-23 18:29)
+
+## Comandos e resultados
+> `	ext
+> python -m pytest -q   (raiz, module-collision resolvida: sem copia de tests no pacote)
+..........................                                               [100%]
+26 passed in 4.15s
+> `
+> `	ext
+> python src/main.py          -> exit 0   (split integro 5973/6027, ITERATE)
+> [skew 55/45 forçado]        -> exit 2   (chi2=100.1013, metricas suprimidas)
+> python src/main.py rest.    -> exit 0   (CSV integro restaurado)
+> `
+
+## Artefatos (src/results do pacote)
+- ab_payload.json / ab_readout.txt            rodada saudavel (exit 0)
+- ab_payload_blocked.json / ab_readout_blocked.txt  rodada do gate (exit 2, sem business metrics)
+
+## CSV de evidencia (data/ab_test_mock.csv)
+- SHA256: 990a7f449b4604dc9bb049e1a01fad1ebf4f98614f027283217832d2d9d4753a
+- rows=22208, users=12000, max entered_at=2026-08-01 18:34:16 (sem eventos futuros)
+
+## Versoes pinned (requirements.txt)
+pandas==2.3.3, numpy==2.0.2, scipy==1.13.1, anthropic==0.125.0, pytest==8.3.5, jsonschema==4.23.0

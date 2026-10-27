@@ -1,0 +1,14 @@
+# Chart-as-code — referenciado por lightdash/dashboards.yml (tile `ab-conversion-readout`).
+# Métricas consumidas (dbt meta em dbt_project/schema.yml): visitor_to_paid_rate,
+# total_paid — breakdown por ab_group.
+version: 1
+
+name: A/B Conversion Readout
+slug: ab-conversion-readout
+spaceSlug: growth
+tableName: saas_funnel
+description: >-
+  Visitor -> Paid conversion rate by A/B group. Feeds the SRM/z-test gate
+  in src/main.py; healthy-run veredito ITERATE @ p=0.056, power 48%.
+display: >
+  Por barra única por ab_group (control/treatment) com a taxa em percentual.

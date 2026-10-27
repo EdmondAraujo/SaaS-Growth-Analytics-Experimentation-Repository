@@ -1,0 +1,14 @@
+# Chart-as-code — referenciado por lightdash/dashboards.yml (tile `mrr-by-plan`).
+# Métrica consumida (dbt meta em saas_funnel): mrr (SUM de mrr_usd,
+# derivado do CASE sobre paid_plan_type).
+version: 1
+
+name: MRR by Paid Plan
+slug: mrr-by-plan
+spaceSlug: growth
+tableName: saas_funnel
+description: >-
+  Monthly recurring revenue break-out por paid_plan_type (starter/pro/
+  enterprise). Nulls de mrr_usd (não-pagantes) são excluídos do sum.
+display: >-
+  Barra empilhada por paid_plan_type ao longo do tempo (signup_date).

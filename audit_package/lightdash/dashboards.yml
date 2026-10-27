@@ -1,0 +1,58 @@
+# Lightdash self-service configuration — dashboard-as-code-1.0 contract.
+# Contract:
+#   - Dimensions/metrics are defined in dbt `meta` (see dbt_project/schema.yml).
+#   - Charts live in lightdash/charts/*.yml (chart-as-code); this dashboard
+#     references them via properties.chartSlug — no dangling references.
+#   - Single YAML document; tiles use `tileSlug`; `tabs` is mandatory.
+version: 1
+
+name: SaaS Growth Funnel
+slug: saas-growth-funnel
+spaceSlug: growth
+description: >-
+  Executive view of the Visitor -> Trial -> Activated -> Paid funnel with
+  A/B test health, channel economics (CAC) and MRR. All tiles read from the
+  dbt models `saas_funnel` and `fct_channel_spend`.
+
+tabs: []
+
+tiles:
+  - tileSlug: ab-conversion-readout
+    type: saved_chart
+    properties:
+      title: A/B Conversion Readout
+      chartSlug: ab-conversion-readout
+    x: 0
+    y: 0
+    w: 6
+    h: 6
+
+  - tileSlug: funnel-stage-counts
+    type: saved_chart
+    properties:
+      title: Funnel Stage Counts
+      chartSlug: funnel-stage-counts
+    x: 6
+    y: 0
+    w: 6
+    h: 6
+
+  - tileSlug: channel-performance
+    type: saved_chart
+    properties:
+      title: Channel Performance (CAC by Channel)
+      chartSlug: channel-performance
+    x: 0
+    y: 6
+    w: 6
+    h: 6
+
+  - tileSlug: mrr-by-plan
+    type: saved_chart
+    properties:
+      title: MRR by Paid Plan
+      chartSlug: mrr-by-plan
+    x: 6
+    y: 6
+    w: 6
+    h: 6

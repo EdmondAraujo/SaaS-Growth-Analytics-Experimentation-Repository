@@ -1,0 +1,14 @@
+[DRY-RUN READOUT — sem ANTHROPIC_API_KEY; heurística local]
+Experimento: activation_flow_v3
+
+VEREDITO: ITERATE
+
+Números-chave:
+ • SRM gate: chi2=0.243, p=0.6220 (APROVADO — split íntegro)
+ • Conversão visitor->paid: control 10.31% vs treatment 11.40% (lift absoluto +1.09 pp, relativo +10.5%)
+ • z=1.911, p=0.0560 (não significativo a 5%)
+ • IC 95% do lift: [-0.03 pp, +2.20 pp]
+ • Power observado: 48.06% (alvo 80%; N por braço hoje = 6000, necessário p/ MDE 2pp = 3799)
+
+Próximo passo:
+ • Iterar a variação: lift observado não sustenta decisão com este tamanho de amostra; priorizar o MDE no design.

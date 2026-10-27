@@ -1,0 +1,249 @@
+version: 2
+
+# ---------------------------------------------------------------------------
+# SOURCES — dataset `analytics_raw` (raw landing zone)
+# ---------------------------------------------------------------------------
+sources:
+  - name: analytics_raw
+    schema: analytics_raw
+    description: >
+      Raw landing zone loaded by the product instrumentation and marketing
+      platform pipelines. Mirrored locally by data/ab_test_mock.csv for the
+      stats engine (funnel_events only).
+    tables:
+      - name: funnel_events
+        description: >
+          Append-only event log of the SaaS conversion funnel.
+          One row per (user, stage) reached. Grain: (user_id, stage).
+        columns:
+          - name: user_id
+            description: Stable anonymous user identifier assigned at first visit.
+            tests:
+              - not_null
+          - name: ab_group
+            description: A/B allocation. Deterministic 50/50 hash split at first visit.
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["control", "treatment"]
+          - name: acquisition_channel
+            description: First-touch attribution channel (last non-direct click).
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["organic_search", "paid_search", "referral", "social", "direct"]
+          - name: plan_type
+            description: Plan under evaluation at each stage.
+            tests:
+              - accepted_values:
+                  values: ["starter", "pro", "enterprise"]
+          - name: stage
+            description: Funnel stage reached by the event.
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["visitor", "trial", "activated", "paid"]
+          - name: entered_at
+            description: UTC event timestamp when the user entered the stage.
+            tests:
+              - not_null
+
+      - name: daily_spend
+        description: >
+          Daily paid-acquisition spend per channel (USD), one row per
+          (spend_date, channel).
+        columns:
+          - name: spend_date
+            description: Calendar date of the spend.
+            tests:
+              - not_null
+          - name: channel
+            description: Acquisition channel. FK-like to funnel_events.acquisition_channel.
+            tests:
+              - not_null
+              - accepted_values:
+                  values: ["organic_search", "paid_search", "referral", "social", "direct"]
+          - name: daily_spend
+            description: Spend in USD for the (date, channel) pair.
+            tests:
+              - not_null
+
+# ---------------------------------------------------------------------------
+# MODELS — staging (view) and marts (table), materialized in dataset `analytics`
+# ---------------------------------------------------------------------------
+models:
+  - name: stg_visitors
+    description: >
+      Typed staging stream of funnel-stage events. One row per (user, stage)
+      entered, with UTC date derivations for dashboard time grains.
+    columns:
+      - name: user_id
+        description: Stable user identifier.
+        tests:
+          - not_null
+      - name: ab_group
+        description: A/B bucket assigned at first visit (control/treatment).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["control", "treatment"]
+      - name: acquisition_channel
+        description: First-touch attribution channel.
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["organic_search", "paid_search", "referral", "social", "direct"]
+      - name: stage
+        description: Funnel stage reached (visitor, trial, activated, paid).
+        tests:
+          - not_null
+          - accepted_values:
+              values: ["visitor", "trial", "activated", "paid"]
+      - name: entered_at
+        description: UTC timestamp of stage entry.
+        tests:
+          - not_null
+      - name: stage_date
+        description: Stage entry date (UTC) for daily/weekly dashboard grains.
+
+  - name: saas_funnel
+    description: >
+      One row per user with boolean stage flags and key timestamps.
+      Single source of truth consumed by Lightdash for signups, conversion
+      rates and MRR. Lightdash metrics live in dbt `meta` (model-as-code).
+    columns:
+      - name: user_id
+        description: Primary key. One row per visitor ever seen.
+        tests:
+          - not_null
+          - unique
+        meta:
+          metrics:
+            total_signups:
+              type: count_distinct
+              description: Distinct visitors (all funnel entrants).
+              sql: user_id
+
+      - name: ab_group
+        description: A/B bucket. Deterministic 50/50 split resolved at first visit.
+      - name: acquisition_channel
+        description: First-touch attribution channel (arrival order).
+      - name: plan_type
+        description: First-seen plan under evaluation.
+      - name: paid_plan_type
+        description: Resolved paid plan from the most recent 'paid' event. Null until paid.
+
+      - name: first_seen_at
+        description: UTC timestamp of first visit.
+      - name: trial_started_at
+        description: UTC timestamp when trial started. Null if never reached trial.
+      - name: activated_at
+        description: UTC timestamp of the activation event. Null before activation.
+      - name: paid_at
+        description: UTC timestamp of conversion. Null until paid.
+
+      - name: reached_visitor
+        description: True for every tracked user (funnel baseline).
+      - name: reached_trial
+        description: True if the user started a trial within 30 whole calendar days of first visit.
+        meta:
+          metrics:
+            total_trials:
+              type: number
+              description: Users who reached the trial stage within 30d.
+              sql: COUNTIF(reached_trial)
+            visitor_to_trial_rate:
+              type: number
+              format: percent
+              round: 2
+              description: Trial starts per distinct visitor.
+              sql: SAFE_DIVIDE(COUNTIF(reached_trial), COUNT(DISTINCT user_id))
+
+      - name: reached_activated
+        description: True if the trial user hit the activation gate.
+        meta:
+          metrics:
+            total_activated:
+              type: number
+              description: Trial users who reached activation.
+              sql: COUNTIF(reached_activated)
+            visitor_to_activated_rate:
+              type: number
+              format: percent
+              round: 2
+              description: Activations per distinct visitor.
+              sql: SAFE_DIVIDE(COUNTIF(reached_activated), COUNT(DISTINCT user_id))
+            trial_to_activated_rate:
+              type: number
+              format: percent
+              round: 2
+              description: Activation rate among trial starters.
+              sql: SAFE_DIVIDE(COUNTIF(reached_activated), COUNTIF(reached_trial))
+
+      - name: reached_paid
+        description: True if the trial user converted to a paid plan.
+        meta:
+          metrics:
+            total_paid:
+              type: number
+              description: Users who converted to any paid plan.
+              sql: COUNTIF(reached_paid)
+            visitor_to_paid_rate:
+              type: number
+              format: percent
+              round: 4
+              description: >
+                Paid conversion per distinct visitor. Primary A/B readout
+                metric for src/main.py.
+              sql: SAFE_DIVIDE(COUNTIF(reached_paid), COUNT(DISTINCT user_id))
+            trial_to_paid_rate:
+              type: number
+              format: percent
+              round: 2
+              description: Paid conversions per trial started. North-star metric.
+              sql: SAFE_DIVIDE(COUNTIF(reached_paid), COUNTIF(reached_trial))
+
+      - name: mrr_usd
+        description: Monthly recurring revenue contribution. Null until paid.
+        meta:
+          metrics:
+            mrr:
+              type: sum
+              format: usd
+              description: Monthly recurring revenue across all paying users (USD).
+              sql: mrr_usd
+
+  - name: fct_channel_spend
+    description: >
+      Monthly channel economics: paid spend joined to paid conversions of the
+      same (month, channel). Auditable CAC numerator/denominator contract.
+    columns:
+      - name: acquisition_channel
+        description: Acquisition channel (full outer join spine key).
+        tests:
+          - not_null
+      - name: spend_month
+        description: Month of the spend, used to pair spend and conversions.
+        tests:
+          - not_null
+      - name: spend_usd
+        description: Paid acquisition spend in the (month, channel). Coalesced to 0.
+        tests:
+          - not_null
+        meta:
+          metrics:
+            cac:
+              type: number
+              format: usd
+              round: 2
+              description: >
+                Cost per paid customer by (month, channel): spend divided by
+                paid conversions of the same month. Months with spend but no
+                conversions surface as NULL cac_usd rows, never silently mixed.
+              sql: SAFE_DIVIDE(SUM(spend_usd), SUM(paid_users))
+      - name: paid_users
+        description: Paid conversions in the (month, channel). Coalesced to 0.
+        tests:
+          - not_null
+      - name: cac_usd
+        description: Row-grain CAC (spend over paid users for the month). Null when no conversions.

@@ -1,0 +1,21 @@
+name: saas_analytics
+version: 1.2.0
+config-version: 2
+
+profile: saas_analytics
+
+# Contrato de datasets:
+#   sources (raw)           -> BigQuery dataset `analytics_raw` (ver schema.yml)
+#   models (staging+marts)  -> BigQuery dataset `analytics` (profile)
+model-paths: ["models"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  saas_analytics:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table
